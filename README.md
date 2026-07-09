@@ -27,7 +27,7 @@ Stop rebuilding your workflows or dragging cables around. Save your setups, prot
 1. Navigate to your ComfyUI `custom_nodes` folder.
 2. Open a terminal and run:
    ```bash
-   git clone https://github.com/YOUR_GITHUB_USERNAME/ComfyUI-GOM-Suite.git
+   git clone https://github.com/GomSamurai/ComfyUI-GOM-Suite.git
    ```
 3. Restart ComfyUI.
 
