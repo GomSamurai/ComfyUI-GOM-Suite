@@ -2,9 +2,7 @@ class GOM_Configurator:
     @classmethod
     def INPUT_TYPES(s):
         return {
-            "required": {
-                "dummy": ("STRING", {"default": "Configurator Node"})
-            },
+            "required": {},
             "hidden": {"id": "UNIQUE_ID"}
         }
 
