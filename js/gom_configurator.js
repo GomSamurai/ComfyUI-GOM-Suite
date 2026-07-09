@@ -540,15 +540,17 @@ app.registerExtension({
                         modal.className = 'gom-info-modal';
                         modal.innerHTML = `
                             <h2>GOM Workflow Configurator</h2>
-                            <p>Este nodo te permite guardar y restaurar estados completos de tu entorno de trabajo. Funciona como una memoria instantánea para tus macros o presets de configuración.</p>
+                            <p>Guarda y restaura estados completos de tu entorno (macros). Los 5 interruptores superiores filtran qué datos se capturan o restauran (Cables, Textos, Valores, Mute).</p>
                             <ul>
-                                <li><strong>Cables:</strong> Guarda qué nodos están conectados entre sí.</li>
-                                <li><strong>Mute/Bypass:</strong> Guarda el estado de encendido o silenciado de los nodos.</li>
-                                <li><strong>Parámetros:</strong> Guarda los números, selectores y seeds de todos los nodos presentes.</li>
-                                <li><strong>Textos:</strong> Guarda de forma independiente las cajas de texto grandes (ej. prompts de generación).</li>
-                                <li><strong>🛡️ Proteger Loaders:</strong> Ignora automáticamente cualquier nodo que sirva para cargar modelos (Checkpoints, Unet, LoRAs, etc.) para evitar enormes tiempos de recarga de VRAM al cambiar de preset.</li>
+                                <li><strong>🛡️ Proteger Loaders:</strong> Ignora nodos de modelos pesados para evitar largas recargas de VRAM.</li>
                             </ul>
-                            <p><strong>Cómo usar:</strong> Escribe un nombre para tu macro, ajusta las opciones globales superiores que te interesen, y pulsa 💾 GUARDAR. Para restaurar el estado en cualquier momento, pulsa ▶️ CARGAR.</p>
+                            <p><strong>Controles de cada Slot:</strong></p>
+                            <ul>
+                                <li><strong>🟢 LED:</strong> Verde si hay datos guardados, gris si está vacío.</li>
+                                <li><strong>🔒 Candado:</strong> Bloquea el botón de guardar para no sobrescribir la macro.</li>
+                                <li><strong>🗑️ Papelera:</strong> Vacía por completo la memoria del slot.</li>
+                                <li><strong>⚡ Render:</strong> Carga la macro e inicia la generación al instante.</li>
+                            </ul>
                             <button class="gom-info-close">ENTENDIDO</button>
                         `;
                         
