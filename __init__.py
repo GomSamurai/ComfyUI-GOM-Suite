@@ -1,13 +1,10 @@
-from .advanced_crop import AdvancedImageCrop
 from .gom_configurator import GOM_Configurator
 
 NODE_CLASS_MAPPINGS = {
-    "GOM_AdvancedImageCrop": AdvancedImageCrop,
     "GOM_Configurator": GOM_Configurator
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "GOM_AdvancedImageCrop": "GOM Advanced Image Crop",
     "GOM_Configurator": "GOM Workflow Configurator"
 }
 

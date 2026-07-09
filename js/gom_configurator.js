@@ -297,20 +297,21 @@ app.registerExtension({
                     }
                     
 
-                    this.properties['preset_' + index] = state;
+                    this.properties['preset_' + slotId] = state;
                     app.graph.setDirtyCanvas(true, true);
                     
-                    const btn = document.getElementById('gom-save-' + index);
+                    if (typeof updateLEDs === 'function') updateLEDs();
+
+                    const btn = container.querySelector('#gom-save-' + slotId);
                     if (btn) {
                         btn.textContent = "✅ GUARDADO";
                         setTimeout(() => btn.textContent = "💾 GUARDAR", 1500);
                     }
-                    redrawUI();
                 };
 
-                const clearPreset = (index) => {
-                    this.properties['preset_' + index] = { links: [], modes: {}, widgets: {} };
-                    redrawUI();
+                const clearPreset = (slotId) => {
+                    this.properties['preset_' + slotId] = { links: [], modes: {}, widgets: {} };
+                    if (typeof updateLEDs === 'function') updateLEDs();
                 };
 
                 const loadPreset = (slotId) => {
@@ -390,23 +391,35 @@ app.registerExtension({
                     }
                 };
 
+                const updateLEDs = () => {
+                    for(let i=1; i<=this.properties.num_slots; i++) {
+                        const led = container.querySelector('#gom-led-' + i);
+                        if (led) {
+                            const pState = this.properties['preset_' + i] || {};
+                            const hasData = (pState.links && pState.links.length > 0) || 
+                                            (pState.modes && Object.keys(pState.modes).length > 0) || 
+                                            (pState.widgets && Object.keys(pState.widgets).length > 0);
+                            led.className = `gom-slot-led ${hasData ? 'led-on' : 'led-off'}`;
+                            led.title = hasData ? 'Tiene datos guardados' : 'Slot vacío';
+                        }
+                    }
+                };
+
                 const redrawUI = () => {
-                    if (container.querySelector('.gom-header')) return;
+                    if (container.querySelector('.gom-header')) {
+                        updateLEDs();
+                        return;
+                    }
                     
                     let slotsHTML = "";
                     for(let i=1; i<=this.properties.num_slots; i++) {
                         const presetName = this.properties['preset_name_' + i] || `Macro ${i}`;
                         const isLocked = this.properties['preset_locked_' + i] === true;
-                        
-                        const pState = this.properties['preset_' + i] || {};
-                        const hasData = (pState.links && pState.links.length > 0) || 
-                                        (pState.modes && Object.keys(pState.modes).length > 0) || 
-                                        (pState.widgets && Object.keys(pState.widgets).length > 0);
 
                         slotsHTML += `
                             <div class="gom-slot">
                                 <div class="gom-slot-header">
-                                    <div class="gom-slot-led ${hasData ? 'led-on' : 'led-off'}" title="${hasData ? 'Tiene datos guardados' : 'Slot vacío'}"></div>
+                                    <div class="gom-slot-led" id="gom-led-${i}"></div>
                                     <input type="text" id="gom-slot-name-${i}" class="gom-slot-input" value="${presetName}" placeholder="Nombre del Preset ${i}">
                                     <button class="gom-icon-btn gom-btn-lock" id="gom-lock-${i}" title="Bloquear Guardado">${isLocked ? '🔒' : '🔓'}</button>
                                     <button class="gom-icon-btn gom-btn-clear" id="gom-clear-${i}" title="Borrar memoria del slot">🗑️</button>
@@ -509,8 +522,6 @@ app.registerExtension({
                         };
                         container.querySelector('#gom-clear-'+i).onclick = () => {
                             clearPreset(i);
-                            container.innerHTML = '';
-                            redrawUI();
                         };
                         container.querySelector('#gom-slot-name-'+i).onchange = (e) => {
                             this.properties['preset_name_' + i] = e.target.value;
@@ -561,7 +572,9 @@ app.registerExtension({
                         redrawUI();
                     };
 
+                    // Dynamically set node size to fit the HTML content perfectly, accounting for zoom
                     app.graph.setDirtyCanvas(true, true);
+                    updateLEDs();
                 };
 
                 // Draw the UI for the first time
