@@ -3,6 +3,9 @@
 Welcome to **GOM Customs**, a collection of advanced, professional-grade nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI). 
 
 ## 🌟 Featured Node: GOM Workflow Configurator
+
+![GOM Configurator UI](preview.png)
+
 The **GOM Workflow Configurator** is a "Master Memory" node that injects a full HTML/CSS DOM Widget directly into your ComfyUI canvas. It allows you to save complete workflow states (Macros) and restore them with a single click.
 
 Stop rebuilding your workflows or dragging cables around. Save your setups, protect your loaders, and jump between complex routing paths instantly!
