@@ -9,7 +9,7 @@ style.textContent = `
         border: 1px solid #3a0f0f;
         border-radius: 8px;
         color: #d0d0d0;
-        padding: 10px;
+        padding: 8px;
         box-sizing: border-box;
         width: 100%;
         height: 100%;
@@ -24,45 +24,18 @@ style.textContent = `
     .gom-header {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         border-bottom: 1px solid #2a0a0a;
-        padding-bottom: 8px;
+        padding-bottom: 6px;
     }
     .gom-header-left {
         display: flex;
         align-items: center;
-        gap: 8px;
-    }
-    .gom-scale-controls {
-        display: flex;
-        gap: 4px;
-    }
-    .gom-scale-btn {
-        background: transparent;
-        border: 1px solid #4a1c1c;
-        color: #e63946;
-        border-radius: 4px;
-        width: 20px;
-        height: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        cursor: pointer;
-        font-size: 14px;
-        transition: all 0.2s;
-        line-height: 1;
-        padding: 0;
-    }
-    .gom-scale-btn:hover {
-        background: #e63946;
-        color: #fff;
-        border-color: #e63946;
+        gap: 6px;
     }
     .gom-logo {
-        width: 18px;
-        height: 18px;
+        width: 16px;
+        height: 16px;
         cursor: pointer;
         transition: transform 0.2s, filter 0.2s;
     }
@@ -71,36 +44,35 @@ style.textContent = `
         filter: drop-shadow(0 0 6px rgba(230, 57, 70, 0.6));
     }
     .gom-title {
-        font-size: 0.95em;
+        font-size: 0.85em;
         font-weight: 700;
         color: #e63946;
         text-transform: uppercase;
-        letter-spacing: 2px;
+        letter-spacing: 1px;
     }
     
     .gom-options-box {
         background: rgba(20, 8, 8, 0.4);
         border: 1px solid #2a0a0a;
         border-radius: 6px;
-        padding: 8px 10px;
-        margin-bottom: 10px;
+        padding: 6px 8px;
+        margin-bottom: 8px;
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 4px;
     }
     .gom-toggle-label {
         display: flex;
         align-items: center;
-        font-size: 0.75em;
+        font-size: 0.7em;
         color: #aaa;
         cursor: pointer;
         transition: color 0.2s;
     }
     .gom-toggle-label:hover { color: #fff; }
     .gom-toggle-label input[type="checkbox"] {
-        margin-right: 8px;
+        margin-right: 6px;
         accent-color: #e63946;
-        transform: scale(1.1);
         cursor: pointer;
     }
 
@@ -108,8 +80,8 @@ style.textContent = `
         background: rgba(22, 22, 22, 0.9);
         border: 1px solid #252525;
         border-radius: 6px;
-        padding: 8px;
-        margin-bottom: 8px;
+        padding: 6px;
+        margin-bottom: 6px;
         transition: border-color 0.2s, box-shadow 0.2s;
     }
     .gom-slot:hover {
@@ -121,11 +93,11 @@ style.textContent = `
         background: #0a0a0a;
         border: 1px solid #333;
         color: #eee;
-        padding: 6px 8px;
+        padding: 4px 6px;
         border-radius: 4px;
-        font-size: 0.8em;
+        font-size: 0.75em;
         box-sizing: border-box;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         transition: border-color 0.2s;
     }
     .gom-slot-input:focus {
@@ -135,15 +107,15 @@ style.textContent = `
     
     .gom-button-row {
         display: flex;
-        gap: 8px;
+        gap: 6px;
     }
     .gom-btn {
         flex: 1;
-        padding: 6px 0;
+        padding: 5px 0;
         border: none;
         border-radius: 4px;
         font-weight: 600;
-        font-size: 0.75em;
+        font-size: 0.7em;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -173,16 +145,16 @@ style.textContent = `
         flex: 0.3;
         background: linear-gradient(180deg, #3a2a15 0%, #201808 100%);
         border: 1px solid #4a3c1c;
-        font-size: 1.1em;
+        font-size: 1em;
     }
     .gom-btn-render:hover { background: linear-gradient(180deg, #4a3c1c 0%, #3a2a15 100%); border-color: #f39c12; color: #fff; }
     .gom-btn-render:active { transform: scale(0.97); }
 
-    .gom-slot-header { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+    .gom-slot-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
     .gom-slot-input { flex: 1; margin-bottom: 0; }
-    .gom-slot-led { width: 8px; height: 8px; border-radius: 50%; background: #333; box-shadow: 0 0 2px #000; flex-shrink: 0; transition: background 0.3s; }
+    .gom-slot-led { width: 6px; height: 6px; border-radius: 50%; background: #333; box-shadow: 0 0 2px #000; flex-shrink: 0; transition: background 0.3s; }
     .gom-slot-led.led-on { background: #4caf50; box-shadow: 0 0 6px #4caf50; }
-    .gom-icon-btn { background: none; border: none; font-size: 1em; cursor: pointer; opacity: 0.5; transition: 0.2s; padding: 2px; }
+    .gom-icon-btn { background: none; border: none; font-size: 0.9em; cursor: pointer; opacity: 0.5; transition: 0.2s; padding: 2px; }
     .gom-icon-btn:hover { opacity: 1; transform: scale(1.2); }
 
     .gom-controls {
@@ -252,7 +224,6 @@ app.registerExtension({
                 if (this.properties.setting_values === undefined) this.properties.setting_values = false;
                 if (this.properties.setting_texts === undefined) this.properties.setting_texts = false;
                 if (this.properties.setting_protect_loaders === undefined) this.properties.setting_protect_loaders = true;
-                if (this.properties.zoom_scale === undefined) this.properties.zoom_scale = 0.85;
 
                 // Create the DOM element wrapper
                 const container = document.createElement("div");
@@ -260,6 +231,16 @@ app.registerExtension({
                 
                 // Add the DOM widget to the node
                 this.addDOMWidget("gom_ui", "html", container, { serialize: false });
+
+                // Hook resize to ensure height matches the node. ComfyUI handles width natively.
+                const onResize = this.onResize;
+                this.onResize = function (size) {
+                    if (onResize) onResize.apply(this, arguments);
+                    if (container) {
+                        // Keep the HTML box flush with the node bottom bounds (account for ~30px title bar)
+                        container.style.height = Math.max(10, size[1] - 30) + "px";
+                    }
+                };
 
                 const savePreset = (slotId) => {
                     const nameInput = container.querySelector('#gom-slot-name-' + slotId);
@@ -433,22 +414,14 @@ app.registerExtension({
                         `;
                     }
 
-                    const zoom = this.properties.zoom_scale || 1;
-                    container.style.zoom = "1";
-
                     container.innerHTML = `
-                        <div style="zoom: ${zoom}; width: ${100 / zoom}%; height: ${100 / zoom}%; transform-origin: top left; display: flex; flex-direction: column;">
-                            <div class="gom-header">
+                        <div class="gom-header">
                             <div class="gom-header-left">
                                 <svg class="gom-logo" viewBox="0 0 100 100">
                                     <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" fill="rgba(255,51,51,0.15)" stroke="#ff3333" stroke-width="8"/>
                                     <circle cx="50" cy="50" r="16" fill="#ff3333"/>
                                 </svg>
                                 <span class="gom-title">Configurator</span>
-                            </div>
-                            <div class="gom-scale-controls">
-                                <button id="gom-scale-down" class="gom-scale-btn">-</button>
-                                <button id="gom-scale-up" class="gom-scale-btn">+</button>
                             </div>
                         </div>
                         
@@ -483,7 +456,6 @@ app.registerExtension({
                                 <button class="gom-ctrl-btn" id="gom-btn-remove">➖</button>
                                 <button class="gom-ctrl-btn" id="gom-btn-add">➕</button>
                             </div>
-                        </div>
                         </div>
                     `;
 
@@ -562,19 +534,6 @@ app.registerExtension({
                         
                         modal.querySelector('.gom-info-close').onclick = () => overlay.remove();
                         overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
-                    };
-
-                    container.querySelector('#gom-scale-down').onclick = () => {
-                        if (this.properties.zoom_scale > 0.5) {
-                            this.properties.zoom_scale -= 0.1;
-                            container.innerHTML = '';
-                            redrawUI();
-                        }
-                    };
-                    container.querySelector('#gom-scale-up').onclick = () => {
-                        this.properties.zoom_scale += 0.1;
-                        container.innerHTML = '';
-                        redrawUI();
                     };
 
                     // Dynamically set node size to fit the HTML content perfectly, accounting for zoom
