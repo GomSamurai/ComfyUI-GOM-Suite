@@ -261,6 +261,17 @@ app.registerExtension({
                 // Add the DOM widget to the node
                 this.addDOMWidget("gom_ui", "html", container, { serialize: false });
 
+                const onDrawForeground = this.onDrawForeground;
+                this.onDrawForeground = function(ctx) {
+                    if (onDrawForeground) onDrawForeground.apply(this, arguments);
+                    
+                    // ComfyUI natively overrides DOM widget widths every frame. 
+                    // We must mathematically counteract our zoom property so it doesn't bleed out or shrink too much.
+                    const zoom = this.properties.zoom_scale || 1;
+                    container.style.width = ((this.size[0] - 20) / zoom) + "px";
+                    container.style.height = ((this.size[1] - 40) / zoom) + "px";
+                };
+
                 const savePreset = (slotId) => {
                     const nameInput = container.querySelector('#gom-slot-name-' + slotId);
                     if(nameInput) this.properties['preset_name_' + slotId] = nameInput.value;
@@ -579,11 +590,13 @@ app.registerExtension({
                     updateLEDs();
                 };
 
+                // Set a generous default size for the node when first created
+                if (!this.size || this.size[0] < 100) {
+                    this.size = [360, 520];
+                }
+
                 // Draw the UI for the first time
                 redrawUI();
-
-                // Set a generous default size for the node when first created
-                this.size = [360, 520];
 
                 return r;
             };
