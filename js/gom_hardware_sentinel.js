@@ -232,7 +232,7 @@ app.registerExtension({
                         </div>
                         
                         <div class="gom-options-box">
-                            <div class="gom-input-group">
+                            <div class="gom-input-group" title="Elige si prefieres que se pause por sobrecalentamiento (Termostato) o generar periódicamente por tiempo (Temporizador).">
                                 <span>Modo Auto-Queue:</span>
                                 <select id="gom-sel-mode">
                                     <option value="temp" ${isTemp ? 'selected' : ''}>Termostato</option>
@@ -241,33 +241,33 @@ app.registerExtension({
                             </div>
                             
                             ${isTemp ? `
-                                <div class="gom-input-group">
+                                <div class="gom-input-group" title="El Auto-Queue se pausará automáticamente si la gráfica supera estos grados, y se reanudará cuando se enfríe.">
                                     <span>Esperar a que se enfríe a (ºC):</span>
                                     <input type="number" id="gom-inp-temp" value="${this.properties.target_temp}" min="30" max="95">
                                 </div>
                             ` : `
-                                <div class="gom-input-group">
+                                <div class="gom-input-group" title="Segundos de espera obligatoria entre el final de una imagen y el comienzo de la siguiente.">
                                     <span>Generar cada (Segundos):</span>
                                     <input type="number" id="gom-inp-time" value="${this.properties.target_time}" min="1">
                                 </div>
                             `}
                             
-                            <div class="gom-input-group">
+                            <div class="gom-input-group" title="Número de imágenes a generar antes de detener el Auto-Queue automáticamente. 0 = Infinito.">
                                 <span>Límite (0 = Infinito):</span>
                                 <input type="number" id="gom-inp-limit" value="${this.properties.limit}" min="0">
                             </div>
                         </div>
 
                         <div class="gom-options-box">
-                            <label class="gom-toggle-label">
+                            <label class="gom-toggle-label" title="Fuerza un borrado profundo de la caché de la gráfica (VRAM) entre imagen e imagen para evitar errores de memoria (OOM).">
                                 <input type="checkbox" id="gom-chk-vram" ${this.properties.vram_clean ? 'checked' : ''}>
                                 🧹 Limpiar VRAM al terminar
                             </label>
-                            <label class="gom-toggle-label">
+                            <label class="gom-toggle-label" title="Emite un sonido por los altavoces cuando se termina el Límite de imágenes o si la cola de ComfyUI se vacía por completo.">
                                 <input type="checkbox" id="gom-chk-sound" ${this.properties.sound_alert ? 'checked' : ''}>
                                 🔔 Alerta sonora al acabar
                             </label>
-                            <label class="gom-toggle-label">
+                            <label class="gom-toggle-label" title="¡CUIDADO! Cuando el Auto-Queue termine (por llegar al límite o vaciarse la cola), enviará una orden a Windows para APAGAR tu ordenador de verdad.">
                                 <input type="checkbox" id="gom-chk-shutdown" ${this.properties.pc_shutdown ? 'checked' : ''}>
                                 🌙 Apagar PC al terminar (CUIDADO)
                             </label>
@@ -306,6 +306,39 @@ app.registerExtension({
                             lastGenTime = Date.now();
                         }
                         redrawUI();
+                    };
+
+                    container.querySelector('.gom-logo').onclick = () => {
+                        const existingOverlay = document.getElementById('gom-info-overlay');
+                        if (existingOverlay) existingOverlay.remove();
+                        
+                        const overlay = document.createElement('div');
+                        overlay.id = 'gom-info-overlay';
+                        overlay.className = 'gom-info-overlay';
+                        
+                        const modal = document.createElement('div');
+                        modal.className = 'gom-info-modal';
+                        modal.innerHTML = `
+                            <h2>GOM Hardware Sentinel</h2>
+                            <p>Este nodo es el <strong>Centro de Operaciones</strong> para proteger tu tarjeta gráfica y automatizar lotes de renderizado masivos. Pulsa el gran botón de INICIAR para que el nodo tome el control de ComfyUI.</p>
+                            <p><strong>Modos de Auto-Queue:</strong></p>
+                            <ul>
+                                <li><strong>🌡️ Termostato:</strong> Comprueba la temperatura de tu GPU (NVIDIA) en tiempo real. Si está demasiado caliente, pausará la generación de la siguiente imagen y esperará pacientemente hasta que se enfríe a la temperatura que le indiques.</li>
+                                <li><strong>⏱️ Temporizador:</strong> Ignora la temperatura y simplemente genera una imagen nueva cada X segundos.</li>
+                            </ul>
+                            <p><strong>Interruptores de Seguridad:</strong></p>
+                            <ul>
+                                <li><strong>🧹 Limpiar VRAM:</strong> Fuerza un borrado profundo de la memoria gráfica entre imagen e imagen. Imprescindible para evitar el error "Out of Memory" (OOM).</li>
+                                <li><strong>🌙 Apagar PC:</strong> Ideal para renders nocturnos. Si se marca, apagará físicamente tu ordenador Windows cuando se alcance el límite de imágenes o la cola se quede vacía.</li>
+                            </ul>
+                            <button class="gom-info-close">ENTENDIDO</button>
+                        `;
+                        
+                        overlay.appendChild(modal);
+                        document.body.appendChild(overlay);
+                        
+                        modal.querySelector('.gom-info-close').onclick = () => overlay.remove();
+                        overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
                     };
                 };
 
