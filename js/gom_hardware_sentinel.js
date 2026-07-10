@@ -242,7 +242,7 @@ app.registerExtension({
                             
                             ${isTemp ? `
                                 <div class="gom-input-group">
-                                    <span>Pausar si supera (ºC):</span>
+                                    <span>Esperar a que se enfríe a (ºC):</span>
                                     <input type="number" id="gom-inp-temp" value="${this.properties.target_temp}" min="30" max="95">
                                 </div>
                             ` : `
