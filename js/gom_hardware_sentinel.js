@@ -1,0 +1,408 @@
+import { app } from "../../scripts/app.js";
+import { api } from "../../scripts/api.js";
+
+const css = `
+    .gom-sentinel-container {
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+        background-color: rgba(14, 14, 14, 0.95);
+        border: 1px solid #3a0f0f;
+        border-radius: 8px;
+        color: #d0d0d0;
+        padding: 8px;
+        box-sizing: border-box;
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        box-shadow: inset 0 0 15px rgba(255, 51, 51, 0.03);
+    }
+    .gom-sentinel-container::-webkit-scrollbar { width: 4px; }
+    .gom-sentinel-container::-webkit-scrollbar-thumb { background: #3a0f0f; border-radius: 2px; }
+    
+    .gom-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        border-bottom: 1px solid #2a0a0a;
+        padding-bottom: 6px;
+    }
+    .gom-header-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .gom-logo {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        transition: transform 0.2s, filter 0.2s;
+    }
+    .gom-logo:hover {
+        transform: scale(1.15);
+        filter: drop-shadow(0 0 6px rgba(230, 57, 70, 0.6));
+    }
+    .gom-title {
+        font-size: 0.85em;
+        font-weight: 700;
+        color: #e63946;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .gom-options-box {
+        background: rgba(20, 8, 8, 0.4);
+        border: 1px solid #2a0a0a;
+        border-radius: 6px;
+        padding: 6px 8px;
+        margin-bottom: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .gom-toggle-label {
+        display: flex;
+        align-items: center;
+        font-size: 0.7em;
+        color: #aaa;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .gom-toggle-label:hover { color: #fff; }
+    .gom-toggle-label input[type="checkbox"] {
+        margin-right: 6px;
+        accent-color: #e63946;
+        cursor: pointer;
+    }
+
+    .gom-thermometer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2em;
+        font-weight: 800;
+        color: #fff;
+        margin: 10px 0;
+        text-shadow: 0 0 10px rgba(230, 57, 70, 0.4);
+    }
+    .gom-thermometer.cool { color: #4caf50; text-shadow: 0 0 10px rgba(76, 175, 80, 0.4); }
+    .gom-thermometer.hot { color: #e63946; text-shadow: 0 0 10px rgba(230, 57, 70, 0.4); }
+
+    .gom-input-group {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.7em;
+        margin-bottom: 6px;
+    }
+    .gom-input-group input[type="number"] {
+        width: 50px;
+        background: #0a0a0a;
+        border: 1px solid #333;
+        color: #eee;
+        padding: 4px;
+        border-radius: 4px;
+        font-size: 1em;
+        text-align: right;
+    }
+    .gom-input-group select {
+        background: #0a0a0a;
+        border: 1px solid #333;
+        color: #eee;
+        padding: 4px;
+        border-radius: 4px;
+        font-size: 1em;
+    }
+
+    .gom-btn-start {
+        background: linear-gradient(180deg, #3a1515 0%, #200808 100%);
+        border: 1px solid #4a1c1c;
+        color: #e63946;
+        padding: 10px;
+        border-radius: 6px;
+        font-weight: 800;
+        font-size: 1em;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: all 0.2s;
+        margin-top: auto;
+    }
+    .gom-btn-start:hover {
+        background: linear-gradient(180deg, #4a1c1c 0%, #3a1515 100%);
+        color: #fff;
+        border-color: #e63946;
+        box-shadow: 0 0 15px rgba(230, 57, 70, 0.3);
+    }
+    .gom-btn-start.active {
+        background: linear-gradient(180deg, #153a15 0%, #082008 100%);
+        border-color: #1c4a1c;
+        color: #4caf50;
+    }
+    .gom-btn-start.active:hover {
+        background: linear-gradient(180deg, #1c4a1c 0%, #153a15 100%);
+        color: #fff;
+        border-color: #4caf50;
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+    }
+    
+    .gom-status-text {
+        font-size: 0.65em;
+        text-align: center;
+        margin-top: 4px;
+        color: #888;
+    }
+`;
+
+const style = document.createElement('style');
+style.textContent = css;
+document.head.appendChild(style);
+
+app.registerExtension({
+    name: "GOM.HardwareSentinel",
+    async beforeRegisterNodeDef(nodeType, nodeData, app) {
+        if (nodeData.name === "GOM_Hardware_Sentinel") {
+            const onNodeCreated = nodeType.prototype.onNodeCreated;
+            
+            nodeType.prototype.onNodeCreated = function () {
+                const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
+
+                // Remove native widgets generated by Python inputs to keep only HTML
+                this.widgets = [];
+                
+                if (this.properties.mode === undefined) this.properties.mode = 'temp';
+                if (this.properties.target_temp === undefined) this.properties.target_temp = 55;
+                if (this.properties.target_time === undefined) this.properties.target_time = 10;
+                if (this.properties.limit === undefined) this.properties.limit = 0;
+                if (this.properties.vram_clean === undefined) this.properties.vram_clean = true;
+                if (this.properties.sound_alert === undefined) this.properties.sound_alert = true;
+                if (this.properties.pc_shutdown === undefined) this.properties.pc_shutdown = false;
+
+                let isRunning = false;
+                let currentTemp = 0;
+                let queueRemaining = 0;
+                let genCount = 0;
+                let lastGenTime = 0;
+                let lastQueuedTime = 0;
+                let tempPollInterval = null;
+                let logicInterval = null;
+                
+                const container = document.createElement("div");
+                container.className = "gom-sentinel-container";
+                this.addDOMWidget("gom_ui", "html", container, { serialize: false });
+
+                const onResize = this.onResize;
+                this.onResize = function (size) {
+                    if (onResize) onResize.apply(this, arguments);
+                    if (container) {
+                        container.style.height = Math.max(10, size[1] - 30) + "px";
+                    }
+                };
+
+                const playBeep = () => {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+                    gain.gain.setValueAtTime(0.5, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 1);
+                };
+
+                const redrawUI = () => {
+                    const isTemp = this.properties.mode === 'temp';
+                    
+                    container.innerHTML = `
+                        <div class="gom-header">
+                            <div class="gom-header-left">
+                                <svg class="gom-logo" viewBox="0 0 100 100">
+                                    <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" fill="rgba(255,51,51,0.15)" stroke="#ff3333" stroke-width="8"/>
+                                    <circle cx="50" cy="50" r="16" fill="#ff3333"/>
+                                </svg>
+                                <span class="gom-title">Hardware Sentinel</span>
+                            </div>
+                        </div>
+
+                        <div class="gom-thermometer ${currentTemp > this.properties.target_temp ? 'hot' : 'cool'}">
+                            ${currentTemp > 0 ? currentTemp + 'ºC' : '--ºC'}
+                        </div>
+                        
+                        <div class="gom-options-box">
+                            <div class="gom-input-group">
+                                <span>Modo Auto-Queue:</span>
+                                <select id="gom-sel-mode">
+                                    <option value="temp" ${isTemp ? 'selected' : ''}>Termostato</option>
+                                    <option value="time" ${!isTemp ? 'selected' : ''}>Temporizador</option>
+                                </select>
+                            </div>
+                            
+                            ${isTemp ? `
+                                <div class="gom-input-group">
+                                    <span>Pausar si supera (ºC):</span>
+                                    <input type="number" id="gom-inp-temp" value="${this.properties.target_temp}" min="30" max="95">
+                                </div>
+                            ` : `
+                                <div class="gom-input-group">
+                                    <span>Generar cada (Segundos):</span>
+                                    <input type="number" id="gom-inp-time" value="${this.properties.target_time}" min="1">
+                                </div>
+                            `}
+                            
+                            <div class="gom-input-group">
+                                <span>Límite (0 = Infinito):</span>
+                                <input type="number" id="gom-inp-limit" value="${this.properties.limit}" min="0">
+                            </div>
+                        </div>
+
+                        <div class="gom-options-box">
+                            <label class="gom-toggle-label">
+                                <input type="checkbox" id="gom-chk-vram" ${this.properties.vram_clean ? 'checked' : ''}>
+                                🧹 Limpiar VRAM al terminar
+                            </label>
+                            <label class="gom-toggle-label">
+                                <input type="checkbox" id="gom-chk-sound" ${this.properties.sound_alert ? 'checked' : ''}>
+                                🔔 Alerta sonora al acabar
+                            </label>
+                            <label class="gom-toggle-label">
+                                <input type="checkbox" id="gom-chk-shutdown" ${this.properties.pc_shutdown ? 'checked' : ''}>
+                                🌙 Apagar PC al terminar (CUIDADO)
+                            </label>
+                        </div>
+
+                        <button id="gom-btn-start" class="gom-btn-start ${isRunning ? 'active' : ''}">
+                            ${isRunning ? '🛑 DETENER AUTO-QUEUE' : '🚀 INICIAR AUTO-QUEUE'}
+                        </button>
+                        
+                        <div class="gom-status-text">
+                            ${isRunning ? `Generadas: ${genCount} ${this.properties.limit > 0 ? '/ ' + this.properties.limit : ''}` : 'Inactivo'}
+                        </div>
+                    `;
+
+                    // Listeners
+                    const bindChange = (id, prop, isNum = false) => {
+                        const el = container.querySelector('#' + id);
+                        if (el) el.onchange = (e) => {
+                            this.properties[prop] = isNum ? Number(e.target.value) : (e.target.checked !== undefined ? e.target.checked : e.target.value);
+                            if (id === 'gom-sel-mode') redrawUI();
+                        };
+                    };
+
+                    bindChange('gom-sel-mode', 'mode');
+                    bindChange('gom-inp-temp', 'target_temp', true);
+                    bindChange('gom-inp-time', 'target_time', true);
+                    bindChange('gom-inp-limit', 'limit', true);
+                    bindChange('gom-chk-vram', 'vram_clean');
+                    bindChange('gom-chk-sound', 'sound_alert');
+                    bindChange('gom-chk-shutdown', 'pc_shutdown');
+
+                    container.querySelector('#gom-btn-start').onclick = () => {
+                        isRunning = !isRunning;
+                        if (isRunning) {
+                            genCount = 0;
+                            lastGenTime = Date.now();
+                        }
+                        redrawUI();
+                    };
+                };
+
+                // Setup default size
+                if (!this.size || this.size[0] < 100) {
+                    this.size = [300, 480];
+                }
+                
+                redrawUI();
+
+                // Poll Temperature via API
+                tempPollInterval = setInterval(async () => {
+                    try {
+                        const res = await fetch('/gom/hardware_status');
+                        const data = await res.json();
+                        if (data.gpu_temp > 0) {
+                            currentTemp = data.gpu_temp;
+                            const thermo = container.querySelector('.gom-thermometer');
+                            if (thermo) {
+                                thermo.textContent = currentTemp + 'ºC';
+                                thermo.className = 'gom-thermometer ' + (currentTemp > this.properties.target_temp ? 'hot' : 'cool');
+                            }
+                        }
+                    } catch (e) {}
+                }, 2000);
+
+                // Auto Queue Logic Loop
+                logicInterval = setInterval(() => {
+                    if (!isRunning) return;
+                    
+                    if (this.properties.limit > 0 && genCount >= this.properties.limit) {
+                        isRunning = false;
+                        redrawUI();
+                        if (this.properties.sound_alert) playBeep();
+                        if (this.properties.pc_shutdown) {
+                            fetch('/gom/shutdown_pc', {method: 'POST'});
+                        }
+                        return;
+                    }
+
+                    // Only queue if queue is empty and we haven't queued in the last 2 seconds
+                    if (queueRemaining === 0 && (Date.now() - lastQueuedTime > 2000)) {
+                        let shouldQueue = false;
+                        
+                        if (this.properties.mode === 'temp') {
+                            if (currentTemp > 0 && currentTemp <= this.properties.target_temp) {
+                                shouldQueue = true;
+                            }
+                        } else {
+                            if (Date.now() - lastGenTime >= this.properties.target_time * 1000) {
+                                shouldQueue = true;
+                            }
+                        }
+
+                        if (shouldQueue) {
+                            lastQueuedTime = Date.now();
+                            app.queuePrompt(0, 1);
+                        }
+                    }
+                }, 1000);
+
+                // Listen to ComfyUI events
+                const statusHandler = (e) => {
+                    if (e.detail && e.detail.exec_info) {
+                        queueRemaining = e.detail.exec_info.queue_remaining;
+                    }
+                };
+                
+                const executedHandler = async (e) => {
+                    if (e.detail && e.detail.node === null) {
+                        // Entire prompt finished
+                        if (isRunning) {
+                            genCount++;
+                            lastGenTime = Date.now();
+                            redrawUI();
+                        }
+                        
+                        if (this.properties.vram_clean) {
+                            fetch('/gom/clean_vram', {method: 'POST'});
+                        }
+                    }
+                };
+
+                api.addEventListener("status", statusHandler);
+                api.addEventListener("executing", executedHandler);
+
+                const onDestroy = this.onDestroy;
+                this.onDestroy = function () {
+                    clearInterval(tempPollInterval);
+                    clearInterval(logicInterval);
+                    api.removeEventListener("status", statusHandler);
+                    api.removeEventListener("executing", executedHandler);
+                    if (onDestroy) onDestroy.apply(this, arguments);
+                };
+
+                return r;
+            };
+        }
+    }
+});
