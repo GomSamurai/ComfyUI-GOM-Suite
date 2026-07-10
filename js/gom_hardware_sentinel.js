@@ -400,37 +400,38 @@ app.registerExtension({
                     }
                 }, 1000);
 
+                let prevQueueRemaining = 0;
+                
                 // Listen to ComfyUI events
                 const statusHandler = (e) => {
                     if (e.detail && e.detail.exec_info) {
-                        queueRemaining = e.detail.exec_info.queue_remaining;
+                        const newQueue = e.detail.exec_info.queue_remaining;
+                        
+                        // Detect exactly when a generation finishes (queue drops to 0)
+                        if (prevQueueRemaining > 0 && newQueue === 0) {
+                            if (isRunning) {
+                                genCount++;
+                                lastGenTime = Date.now();
+                                redrawUI();
+                                
+                                if (this.properties.vram_clean) {
+                                    fetch('/gom/clean_vram', {method: 'POST'});
+                                }
+                            }
+                        }
+                        
+                        queueRemaining = newQueue;
+                        prevQueueRemaining = newQueue;
                     }
                 };
                 
-                const executedHandler = async (e) => {
-                    if (e.detail && e.detail.node === null) {
-                        // Entire prompt finished
-                        if (isRunning) {
-                            genCount++;
-                            lastGenTime = Date.now();
-                            redrawUI();
-                        }
-                        
-                        if (this.properties.vram_clean) {
-                            fetch('/gom/clean_vram', {method: 'POST'});
-                        }
-                    }
-                };
-
                 api.addEventListener("status", statusHandler);
-                api.addEventListener("executing", executedHandler);
 
                 const onDestroy = this.onDestroy;
                 this.onDestroy = function () {
                     clearInterval(tempPollInterval);
                     clearInterval(logicInterval);
                     api.removeEventListener("status", statusHandler);
-                    api.removeEventListener("executing", executedHandler);
                     if (onDestroy) onDestroy.apply(this, arguments);
                 };
 
