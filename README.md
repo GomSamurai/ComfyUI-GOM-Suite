@@ -12,12 +12,19 @@ Stop rebuilding your workflows or dragging cables around. Save your setups, prot
 
 ### 🔥 Key Features
 *   **Deep State Saving:** Save all your numerical values, combo boxes, seeds, and even text prompts globally.
-*   **Surgical Control (5 Filters):** Choose exactly what you want to save/load:
-    *   🔌 **Cables (Connections):** Alter routing paths on the fly.
-    *   🔕 **Mute/Bypass:** Toggle entire node groups on or off.
-    *   🎛️ **Values & Parameters:** Save samplers, steps, scales.
-    *   📝 **Texts (Prompts):** Isolated prompt saving so you don't lose your current text.
-    *   🛡️ **Protect Loaders:** Automatically ignores heavy model loaders (Checkpoints, VAE, LoRA) to prevent VRAM reloading penalties when switching presets.
+*   **Surgical Control:** Choose exactly what you want to save/load across 3 main categories:
+    *   🔌 **Connections & State:**
+        *   **Cables:** Alter routing paths on the fly.
+        *   **Mute/Bypass:** Toggle entire branches on or off.
+    *   🎛️ **Parameters & Texts:**
+        *   **Values:** Save samplers, steps, scales.
+        *   **Texts:** Isolated prompt saving so you don't lose your current text.
+        *   🛡️ **Protect Loaders:** Automatically ignores heavy model loaders (Checkpoints, VAE, LoRA) to prevent VRAM reloading penalties.
+    *   🎨 **Visual Environment:**
+        *   **Position & Size:** Moves your nodes back to their saved layout.
+        *   **Camera & Zoom:** Instantly teleports your canvas view to the exact area you saved.
+        *   **Colors & Titles:** Restores custom node colors, shapes, and titles.
+        *   **Native Groups:** Captures and restores ComfyUI group boxes (including their color and sizes).
 *   **Professional UI:** A sleek, compact, dark-mode interface that doesn't clutter your screen.
 *   **⚡ Instant Render:** The lightning button (`⚡`) loads a preset and automatically queues the prompt.
 *   **🔒 Lock Slots:** Lock your favorite presets to prevent accidental overwrites.

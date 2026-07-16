@@ -59,7 +59,25 @@ style.textContent = `
         margin-bottom: 8px;
         display: flex;
         flex-direction: column;
-        gap: 4px;
+    }
+    .gom-options-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 8px;
+    }
+    .gom-options-section-title {
+        font-size: 0.65em;
+        color: #e63946;
+        text-transform: uppercase;
+        margin-top: 6px;
+        margin-bottom: 4px;
+        border-bottom: 1px solid #3a0f0f;
+        padding-bottom: 2px;
+        letter-spacing: 0.5px;
+        font-weight: bold;
+    }
+    .gom-options-section-title:first-child {
+        margin-top: 0;
     }
     .gom-toggle-label {
         display: flex;
@@ -69,6 +87,7 @@ style.textContent = `
         cursor: pointer;
         transition: color 0.2s;
     }
+    .gom-toggle-label.full-width { grid-column: span 2; }
     .gom-toggle-label:hover { color: #fff; }
     .gom-toggle-label input[type="checkbox"] {
         margin-right: 6px;
@@ -224,6 +243,10 @@ app.registerExtension({
                 if (this.properties.setting_values === undefined) this.properties.setting_values = false;
                 if (this.properties.setting_texts === undefined) this.properties.setting_texts = false;
                 if (this.properties.setting_protect_loaders === undefined) this.properties.setting_protect_loaders = true;
+                if (this.properties.setting_layout === undefined) this.properties.setting_layout = true;
+                if (this.properties.setting_visuals === undefined) this.properties.setting_visuals = true;
+                if (this.properties.setting_camera === undefined) this.properties.setting_camera = true;
+                if (this.properties.setting_groups === undefined) this.properties.setting_groups = true;
 
                 // Create the DOM element wrapper
                 const container = document.createElement("div");
@@ -246,7 +269,46 @@ app.registerExtension({
                     const nameInput = container.querySelector('#gom-slot-name-' + slotId);
                     if(nameInput) this.properties['preset_name_' + slotId] = nameInput.value;
 
-                    const state = { links: [], modes: {}, widgets: {} };
+                    const state = { links: [], modes: {}, widgets: {}, nodes: {}, camera: null, groups: [] };
+
+                    if (this.properties.setting_camera) {
+                        if (app.canvas && app.canvas.ds) {
+                            state.camera = {
+                                offset: [...app.canvas.ds.offset],
+                                scale: app.canvas.ds.scale
+                            };
+                        }
+                    }
+
+                    if (this.properties.setting_groups) {
+                        if (app.graph && app.graph._groups) {
+                            state.groups = app.graph._groups.map(g => {
+                                return {
+                                    title: g.title,
+                                    bounding: [...g._bounding],
+                                    color: g.color,
+                                    font_size: g.font_size
+                                };
+                            });
+                        }
+                    }
+
+                    if (this.properties.setting_cables || this.properties.setting_layout || this.properties.setting_visuals) {
+                        for (const node of app.graph._nodes) {
+                            state.nodes[node.id] = {
+                                inputs: node.inputs ? JSON.parse(JSON.stringify(node.inputs)) : [],
+                                outputs: node.outputs ? JSON.parse(JSON.stringify(node.outputs)) : [],
+                                properties: node.properties ? JSON.parse(JSON.stringify(node.properties)) : {},
+                                flags: node.flags ? JSON.parse(JSON.stringify(node.flags)) : {},
+                                pos: node.pos ? [...node.pos] : undefined,
+                                size: node.size ? [...node.size] : undefined,
+                                color: node.color,
+                                bgcolor: node.bgcolor,
+                                shape: node.shape,
+                                title: node.title
+                            };
+                        }
+                    }
 
                     if (this.properties.setting_cables) {
                         for (const linkId in app.graph.links) {
@@ -291,7 +353,7 @@ app.registerExtension({
                 };
 
                 const clearPreset = (slotId) => {
-                    this.properties['preset_' + slotId] = { links: [], modes: {}, widgets: {} };
+                    this.properties['preset_' + slotId] = { links: [], modes: {}, widgets: {}, nodes: {} };
                     if (typeof updateLEDs === 'function') updateLEDs();
                 };
 
@@ -309,6 +371,74 @@ app.registerExtension({
                         return type.includes("loader") || type.includes("checkpoint") || type.includes("model") || type.includes("unet") ||
                                title.includes("loader") || title.includes("checkpoint") || title.includes("model");
                     };
+
+                    if (this.properties.setting_camera && state.camera) {
+                        if (app.canvas && app.canvas.ds) {
+                            app.canvas.ds.offset = [...state.camera.offset];
+                            app.canvas.ds.scale = state.camera.scale;
+                            app.canvas.setDirty(true, true);
+                        }
+                    }
+
+                    if (this.properties.setting_groups && state.groups) {
+                        if (app.graph) {
+                            // Limpiar los grupos existentes
+                            while (app.graph._groups && app.graph._groups.length > 0) {
+                                const g = app.graph._groups[0];
+                                if (app.graph.remove) app.graph.remove(g);
+                                else {
+                                    const index = app.graph._groups.indexOf(g);
+                                    if (index !== -1) app.graph._groups.splice(index, 1);
+                                }
+                            }
+
+                            // Recrear los grupos guardados
+                            for (const gData of state.groups) {
+                                const group = new LiteGraph.LGraphGroup();
+                                group.title = gData.title;
+                                group._bounding = new Float32Array(gData.bounding);
+                                group.color = gData.color;
+                                group.font_size = gData.font_size;
+                                app.graph.add(group);
+                            }
+                        }
+                    }
+
+                    if (state.nodes && (this.properties.setting_cables || this.properties.setting_layout || this.properties.setting_visuals)) {
+                        for (const nodeId in state.nodes) {
+                            const node = app.graph.getNodeById(nodeId);
+                            if (node) {
+                                if (this.properties.setting_protect_loaders && isLoader(node)) continue;
+                                const nodeState = state.nodes[nodeId];
+                                
+                                if (this.properties.setting_cables) {
+                                    if (nodeState.flags) node.flags = JSON.parse(JSON.stringify(nodeState.flags));
+                                    if (nodeState.properties) node.properties = JSON.parse(JSON.stringify(nodeState.properties));
+                                    
+                                    if (nodeState.inputs) {
+                                        node.inputs = JSON.parse(JSON.stringify(nodeState.inputs));
+                                        node.inputs.forEach(inp => { if (inp) inp.link = null; });
+                                    }
+                                    if (nodeState.outputs) {
+                                        node.outputs = JSON.parse(JSON.stringify(nodeState.outputs));
+                                        node.outputs.forEach(out => { if (out) out.links = []; });
+                                    }
+                                }
+
+                                if (this.properties.setting_layout) {
+                                    if (nodeState.pos) node.pos = [...nodeState.pos];
+                                    if (nodeState.size) node.size = [...nodeState.size];
+                                }
+
+                                if (this.properties.setting_visuals) {
+                                    if (nodeState.color !== undefined) node.color = nodeState.color;
+                                    if (nodeState.bgcolor !== undefined) node.bgcolor = nodeState.bgcolor;
+                                    if (nodeState.shape !== undefined) node.shape = nodeState.shape;
+                                    if (nodeState.title !== undefined) node.title = nodeState.title;
+                                }
+                            }
+                        }
+                    }
 
                     if (this.properties.setting_cables && state.links) {
                         const existingLinks = Object.keys(app.graph.links);
@@ -379,7 +509,10 @@ app.registerExtension({
                             const pState = this.properties['preset_' + i] || {};
                             const hasData = (pState.links && pState.links.length > 0) || 
                                             (pState.modes && Object.keys(pState.modes).length > 0) || 
-                                            (pState.widgets && Object.keys(pState.widgets).length > 0);
+                                            (pState.widgets && Object.keys(pState.widgets).length > 0) ||
+                                            (pState.nodes && Object.keys(pState.nodes).length > 0) ||
+                                            (pState.camera && pState.camera.offset) ||
+                                            (pState.groups && pState.groups.length > 0);
                             led.className = `gom-slot-led ${hasData ? 'led-on' : 'led-off'}`;
                             led.title = hasData ? 'Tiene datos guardados' : 'Slot vacío';
                         }
@@ -426,26 +559,44 @@ app.registerExtension({
                         </div>
                         
                         <div class="gom-options-box">
-                            <label class="gom-toggle-label" title="Guarda y restaura las conexiones (cables) entre los nodos.">
-                                <input type="checkbox" id="gom-set-cables" ${this.properties.setting_cables ? 'checked' : ''}>
-                                Cables (Conexiones)
-                            </label>
-                            <label class="gom-toggle-label" title="Guarda y restaura el estado de Mute/Bypass de los nodos.">
-                                <input type="checkbox" id="gom-set-bypass" ${this.properties.setting_bypass ? 'checked' : ''}>
-                                Estado Mute/Bypass
-                            </label>
-                            <label class="gom-toggle-label" title="Guarda y restaura valores numéricos, samplers, seeds y selectores.">
-                                <input type="checkbox" id="gom-set-values" ${this.properties.setting_values ? 'checked' : ''}>
-                                Parámetros y Valores
-                            </label>
-                            <label class="gom-toggle-label" title="Guarda y restaura cuadros de texto como los Prompts de texto largo.">
-                                <input type="checkbox" id="gom-set-texts" ${this.properties.setting_texts ? 'checked' : ''}>
-                                Textos (Prompts)
-                            </label>
-                            <label class="gom-toggle-label" title="Protege los modelos para evitar recargas lentas. Los Loaders se ignorarán.">
-                                <input type="checkbox" id="gom-set-loaders" ${this.properties.setting_protect_loaders ? 'checked' : ''}>
-                                🛡️ Proteger Loaders
-                            </label>
+                            <div class="gom-options-section-title">🔌 Conexiones y Estado</div>
+                            <div class="gom-options-grid">
+                                <label class="gom-toggle-label" title="Guarda y restaura las conexiones (cables) entre los nodos.">
+                                    <input type="checkbox" id="gom-set-cables" ${this.properties.setting_cables ? 'checked' : ''}> Cables
+                                </label>
+                                <label class="gom-toggle-label" title="Guarda y restaura el estado de Mute/Bypass de los nodos.">
+                                    <input type="checkbox" id="gom-set-bypass" ${this.properties.setting_bypass ? 'checked' : ''}> Mute/Bypass
+                                </label>
+                            </div>
+
+                            <div class="gom-options-section-title">🎛️ Parámetros</div>
+                            <div class="gom-options-grid">
+                                <label class="gom-toggle-label" title="Guarda y restaura valores numéricos, samplers, seeds y selectores.">
+                                    <input type="checkbox" id="gom-set-values" ${this.properties.setting_values ? 'checked' : ''}> Valores
+                                </label>
+                                <label class="gom-toggle-label" title="Guarda y restaura cuadros de texto como los Prompts de texto largo.">
+                                    <input type="checkbox" id="gom-set-texts" ${this.properties.setting_texts ? 'checked' : ''}> Textos
+                                </label>
+                                <label class="gom-toggle-label full-width" title="Protege los modelos para evitar recargas lentas. Los Loaders se ignorarán.">
+                                    <input type="checkbox" id="gom-set-loaders" ${this.properties.setting_protect_loaders ? 'checked' : ''}> 🛡️ Proteger Loaders
+                                </label>
+                            </div>
+
+                            <div class="gom-options-section-title">🎨 Entorno Visual</div>
+                            <div class="gom-options-grid">
+                                <label class="gom-toggle-label" title="Guarda y restaura la posición y tamaño de los nodos.">
+                                    <input type="checkbox" id="gom-set-layout" ${this.properties.setting_layout ? 'checked' : ''}> Posición
+                                </label>
+                                <label class="gom-toggle-label" title="Guarda y restaura la posición de la cámara y el zoom del lienzo.">
+                                    <input type="checkbox" id="gom-set-camera" ${this.properties.setting_camera ? 'checked' : ''}> Cámara
+                                </label>
+                                <label class="gom-toggle-label" title="Guarda y restaura colores, estilos y títulos personalizados.">
+                                    <input type="checkbox" id="gom-set-visuals" ${this.properties.setting_visuals ? 'checked' : ''}> Colores
+                                </label>
+                                <label class="gom-toggle-label" title="Guarda y restaura las cajas de grupo (Groups) y sus colores.">
+                                    <input type="checkbox" id="gom-set-groups" ${this.properties.setting_groups ? 'checked' : ''}> Grupos
+                                </label>
+                            </div>
                         </div>
                         
                         ${slotsHTML}
@@ -464,6 +615,10 @@ app.registerExtension({
                     container.querySelector('#gom-set-values').onchange = (e) => this.properties.setting_values = e.target.checked;
                     container.querySelector('#gom-set-texts').onchange = (e) => this.properties.setting_texts = e.target.checked;
                     container.querySelector('#gom-set-loaders').onchange = (e) => this.properties.setting_protect_loaders = e.target.checked;
+                    container.querySelector('#gom-set-layout').onchange = (e) => this.properties.setting_layout = e.target.checked;
+                    container.querySelector('#gom-set-visuals').onchange = (e) => this.properties.setting_visuals = e.target.checked;
+                    container.querySelector('#gom-set-camera').onchange = (e) => this.properties.setting_camera = e.target.checked;
+                    container.querySelector('#gom-set-groups').onchange = (e) => this.properties.setting_groups = e.target.checked;
 
                     container.querySelector('#gom-btn-add').onclick = () => {
                         this.properties.num_slots++;
@@ -515,9 +670,12 @@ app.registerExtension({
                         modal.className = 'gom-info-modal';
                         modal.innerHTML = `
                             <h2>GOM Workflow Configurator</h2>
-                            <p>Guarda y restaura estados completos de tu entorno (macros). Los 5 interruptores superiores filtran qué datos se capturan o restauran (Cables, Textos, Valores, Mute).</p>
+                            <p>Guarda y restaura estados completos de tu entorno (macros). Puedes elegir exactamente qué elementos se capturan o restauran:</p>
                             <ul>
-                                <li><strong>🛡️ Proteger Loaders:</strong> Ignora nodos de modelos pesados para evitar largas recargas de VRAM.</li>
+                                <li><strong>🔌 Conexiones y Estado:</strong> Guarda los cables y los estados de Mute/Bypass.</li>
+                                <li><strong>🎛️ Parámetros:</strong> Guarda valores numéricos y campos de texto (Prompts).</li>
+                                <li><strong>🎨 Entorno Visual:</strong> Guarda la geometría (grupos, posición, colores) e incluso la navegación de la cámara por el lienzo.</li>
+                                <li><strong>🛡️ Proteger Loaders:</strong> Ignora nodos de modelos para evitar recargas de VRAM al cambiar de macro.</li>
                             </ul>
                             <p><strong>Controles de cada Slot:</strong></p>
                             <ul>
@@ -548,6 +706,15 @@ app.registerExtension({
 
                 // Draw the UI for the first time
                 redrawUI();
+
+                // Hook onConfigure to redraw the UI after the node properties are loaded from a saved workflow
+                const onConfigure = this.onConfigure;
+                this.onConfigure = function(info) {
+                    if (onConfigure) onConfigure.apply(this, arguments);
+                    // Force a full redraw so it picks up the loaded this.properties (num_slots, names, etc.)
+                    if (container) container.innerHTML = '';
+                    redrawUI();
+                };
 
                 return r;
             };
